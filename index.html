@@ -5,819 +5,1065 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>응급처치 방탈출 - 생명의 은인</title>
 <style>
-  :root {
-    --bg: #0a0a0f;
-    --panel: #12121a;
-    --border: #2a2a3e;
-    --accent: #e63946;
-    --accent2: #457b9d;
-    --success: #2d9c5a;
-    --warning: #f4a261;
-    --text: #e0e0f0;
-    --text-dim: #888899;
-    --timer-ok: #2d9c5a;
-    --timer-warn: #f4a261;
-    --timer-danger: #e63946;
-  }
+:root {
+  --bg: #0a0a0a;
+  --panel: #111118;
+  --border: #2a2a3e;
+  --accent: #e63946;
+  --success: #2d9c5a;
+  --warning: #f4a261;
+  --text: #e0e0f0;
+  --dim: #888899;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-x: hidden;
+}
+#app { width: 100%; max-width: 740px; position: relative; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── 화면 전환 ── */
+.screen { display: none; }
+.screen.active { display: block; animation: fadeUp .45s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-  }
+/* ── 방 배경 그라디언트 ── */
+body.room-1 { background: radial-gradient(ellipse at center, #0a1a0d 0%, #0a0a0a 70%); }
+body.room-2 { background: radial-gradient(ellipse at center, #1a0e00 0%, #0a0a0a 70%); }
+body.room-3 { background: radial-gradient(ellipse at center, #00101a 0%, #0a0a0a 70%); }
+body.room-4 { background: radial-gradient(ellipse at center, #120a1a 0%, #0a0a0a 70%); }
+body.room-5 { background: radial-gradient(ellipse at center, #1a0000 0%, #0a0a0a 70%); }
 
-  #app {
-    width: 100%;
-    max-width: 720px;
-  }
+/* ── 타이틀 ── */
+#title-screen { text-align:center; padding:3rem 1.5rem; }
+.title-logo { font-size:4rem; margin-bottom:.5rem; filter:drop-shadow(0 0 20px #e63946); }
+#title-screen h1 { font-size:2rem; color:var(--accent); text-shadow:0 0 24px rgba(230,57,70,.6); margin-bottom:.3rem; }
+#title-screen .sub { color:var(--dim); font-size:.9rem; margin-bottom:2rem; }
+.story-card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-left:4px solid var(--accent);
+  border-radius:10px;
+  padding:1.3rem 1.5rem;
+  text-align:left;
+  line-height:1.9;
+  margin-bottom:2rem;
+  font-size:.93rem;
+}
+.story-card strong { color:var(--warning); }
+.miya-intro {
+  display:flex; align-items:center; gap:.8rem;
+  background:#0d0d1a; border:1px solid var(--border); border-radius:10px;
+  padding:.8rem 1rem; margin-top:1rem; font-size:.88rem;
+}
+.miya-face { font-size:2rem; flex-shrink:0; }
 
-  /* ── 화면 공통 ── */
-  .screen { display: none; animation: fadeIn .4s ease; }
-  .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+/* ── 버튼 ── */
+.btn {
+  display:inline-block; padding:.75rem 2rem; border-radius:8px;
+  border:none; cursor:pointer; font-size:1rem; font-weight:700;
+  font-family:inherit; transition:all .2s;
+}
+.btn-red { background:var(--accent); color:#fff; box-shadow:0 0 18px rgba(230,57,70,.4); }
+.btn-red:hover { background:#ff4f5e; transform:translateY(-2px); }
+.btn-ghost { background:transparent; color:var(--dim); border:1px solid var(--border); margin-top:.6rem; }
+.btn-ghost:hover { color:var(--text); border-color:var(--dim); }
 
-  /* ── 시작 화면 ── */
-  #title-screen {
-    text-align: center;
-    padding: 3rem 1.5rem;
-  }
-  .game-logo {
-    font-size: 3.5rem;
-    margin-bottom: .5rem;
-  }
-  #title-screen h1 {
-    font-size: 2rem;
-    color: var(--accent);
-    text-shadow: 0 0 20px rgba(230,57,70,.5);
-    margin-bottom: .4rem;
-  }
-  #title-screen .subtitle {
-    color: var(--text-dim);
-    font-size: .95rem;
-    margin-bottom: 2rem;
-  }
-  .story-box {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--accent);
-    border-radius: 8px;
-    padding: 1.2rem 1.4rem;
-    text-align: left;
-    line-height: 1.8;
-    margin-bottom: 2rem;
-    font-size: .95rem;
-  }
-  .story-box strong { color: var(--warning); }
+/* ── 게임 헤더 ── */
+.game-header {
+  display:grid; grid-template-columns:auto 1fr auto;
+  align-items:center; gap:1rem;
+  padding:.7rem 1rem;
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px 10px 0 0; border-bottom:none;
+}
+.progress-dots { display:flex; gap:.4rem; }
+.dot {
+  width:30px; height:30px; border-radius:50%;
+  border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.7rem; font-weight:700; transition:all .3s;
+}
+.dot.done { background:var(--success); border-color:var(--success); color:#fff; }
+.dot.current { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 0 12px rgba(230,57,70,.5); }
+.dot.pending { color:var(--dim); }
 
-  /* ── 버튼 ── */
-  .btn {
-    display: inline-block;
-    padding: .75rem 2rem;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 700;
-    transition: all .2s;
-    font-family: inherit;
-  }
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-    box-shadow: 0 0 20px rgba(230,57,70,.4);
-  }
-  .btn-primary:hover { background: #ff4f5e; transform: translateY(-2px); box-shadow: 0 4px 24px rgba(230,57,70,.5); }
-  .btn-secondary {
-    background: transparent;
-    color: var(--text-dim);
-    border: 1px solid var(--border);
-    margin-top: .7rem;
-  }
-  .btn-secondary:hover { color: var(--text); border-color: var(--text-dim); }
+.score-wrap { text-align:center; }
+.score-label { font-size:.65rem; color:var(--dim); }
+.score-num { font-size:1.3rem; font-weight:900; color:var(--warning); transition:all .3s; }
+.score-num.bump { transform:scale(1.3); color:#fff; }
 
-  /* ── 게임 화면 ── */
-  #game-screen { padding: 0; }
+.timer-wrap { display:flex; align-items:center; gap:.4rem; }
+#timer-display {
+  font-size:1.4rem; font-weight:900; min-width:2.5ch;
+  text-align:right; transition:color .3s;
+}
 
-  .game-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: .8rem 1rem;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px 10px 0 0;
-    border-bottom: none;
-  }
+/* ── 게임 바디 ── */
+.game-body {
+  background:var(--panel); border:1px solid var(--border);
+  border-top:none; border-radius:0 0 10px 10px; padding:1.3rem;
+}
+.room-title {
+  font-size:1.2rem; font-weight:700; color:var(--accent);
+  margin-bottom:.8rem; display:flex; align-items:center; gap:.5rem;
+}
+.room-title .lock-icon { transition:all .4s; display:inline-block; }
+.room-title .lock-icon.unlocked { animation:spinUnlock .4s ease; }
+@keyframes spinUnlock { 0%{transform:rotate(-30deg)scale(1.3)} 100%{transform:rotate(0)scale(1)} }
 
-  .progress-dots {
-    display: flex;
-    gap: .5rem;
-  }
-  .dot {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: .7rem; font-weight: 700;
-    transition: all .3s;
-  }
-  .dot.done { background: var(--success); border-color: var(--success); color: #fff; }
-  .dot.current { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(230,57,70,.5); }
-  .dot.pending { color: var(--text-dim); }
+/* ── 미야 말풍선 ── */
+.miya-bubble {
+  display:flex; align-items:flex-start; gap:.7rem;
+  background:#0d0d1a; border:1px solid #2a2a4a;
+  border-radius:10px; padding:.8rem 1rem;
+  margin-bottom:1rem; font-size:.88rem; line-height:1.6;
+  position:relative;
+}
+.miya-bubble .face { font-size:1.6rem; flex-shrink:0; }
+.miya-text { color:#c8c8e8; }
 
-  .room-label {
-    font-size: .8rem;
-    color: var(--text-dim);
-  }
+/* ── 장면 박스 ── */
+.scene-box {
+  background:#080810; border:1px solid var(--border); border-radius:8px;
+  padding:1rem 1.2rem; margin-bottom:1rem;
+  font-size:.92rem; line-height:1.85;
+  min-height:3.5rem;
+}
+.scene-box .char { color:var(--warning); font-weight:700; }
+/* 타이핑 커서 */
+.typing::after { content:'|'; animation:blink .6s step-end infinite; margin-left:1px; }
+@keyframes blink { 50%{opacity:0;} }
 
-  #timer-wrap {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-  }
-  #timer-icon { font-size: 1.2rem; }
-  #timer-display {
-    font-size: 1.3rem;
-    font-weight: 900;
-    min-width: 2.5ch;
-    text-align: right;
-    transition: color .3s;
-  }
+/* ── 하트 / 스텝 ── */
+.status-row {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:.8rem; font-size:.82rem; color:var(--dim);
+}
+.hearts { display:flex; gap:.3rem; }
+.heart { font-size:1rem; transition:all .2s; }
+.heart.lost { opacity:.15; transform:scale(.8); }
+.step-label { font-size:.78rem; color:var(--dim); }
 
-  .game-body {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-radius: 0 0 10px 10px;
-    padding: 1.4rem;
-  }
+/* ── 선택지 ── */
+.choices { display:grid; gap:.55rem; }
+.choice-btn {
+  width:100%; background:#0a0a14; border:1px solid var(--border);
+  border-radius:8px; padding:.8rem 1rem;
+  text-align:left; color:var(--text); cursor:pointer;
+  font-size:.9rem; line-height:1.5; transition:all .2s;
+  font-family:inherit; display:flex; align-items:flex-start; gap:.7rem;
+}
+.choice-btn:hover:not(:disabled) { border-color:#457b9d; background:#0f0f20; transform:translateX(4px); }
+.choice-btn .cnum {
+  min-width:22px; height:22px; border-radius:50%;
+  background:var(--border); display:flex; align-items:center; justify-content:center;
+  font-size:.72rem; font-weight:700; flex-shrink:0; margin-top:1px;
+}
+.choice-btn.correct { border-color:var(--success); background:rgba(45,156,90,.12); }
+.choice-btn.wrong { border-color:var(--accent); background:rgba(230,57,70,.1); animation:shake .3s; }
+.choice-btn:disabled { cursor:default; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
 
-  .room-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--accent);
-    margin-bottom: .8rem;
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-  }
+/* ── 드래그앤드롭 ── */
+.drag-area {
+  display:flex; flex-direction:column; gap:.5rem;
+  margin-bottom:.8rem;
+}
+.drag-item {
+  background:#0a0a14; border:1px solid var(--border);
+  border-radius:8px; padding:.7rem 1rem;
+  cursor:grab; user-select:none; font-size:.88rem;
+  display:flex; align-items:center; gap:.7rem; transition:all .2s;
+}
+.drag-item:hover { border-color:#457b9d; background:#0f0f20; }
+.drag-item.dragging { opacity:.4; }
+.drag-item.drag-over { border-color:var(--warning); background:rgba(244,162,97,.08); }
+.drag-handle { color:var(--dim); font-size:1rem; }
+.drag-submit { margin-top:.6rem; }
+.drag-result-correct { border-color:var(--success)!important; background:rgba(45,156,90,.12)!important; }
+.drag-result-wrong { border-color:var(--accent)!important; background:rgba(230,57,70,.1)!important; }
 
-  .scene-box {
-    background: #0d0d16;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem 1.2rem;
-    margin-bottom: 1.2rem;
-    font-size: .95rem;
-    line-height: 1.8;
-    position: relative;
-    overflow: hidden;
-  }
-  .scene-box::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at top left, rgba(230,57,70,.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .scene-box .character {
-    color: var(--warning);
-    font-weight: 700;
-  }
+/* ── 힌트 버튼 ── */
+.hint-row { margin:.7rem 0; text-align:right; }
+.hint-btn {
+  background:transparent; border:1px dashed #555; color:var(--dim);
+  border-radius:6px; padding:.35rem .8rem; font-size:.78rem;
+  cursor:pointer; font-family:inherit; transition:all .2s;
+}
+.hint-btn:hover { border-color:var(--warning); color:var(--warning); }
+.hint-box {
+  background:#0d0a00; border:1px solid #4a3800;
+  border-left:3px solid var(--warning);
+  border-radius:8px; padding:.8rem 1rem;
+  font-size:.82rem; line-height:1.7; margin-bottom:.7rem; display:none;
+}
+.hint-box.show { display:block; animation:fadeUp .3s; }
 
-  .tries-bar {
-    display: flex;
-    align-items: center;
-    gap: .4rem;
-    margin-bottom: 1rem;
-    font-size: .82rem;
-    color: var(--text-dim);
-  }
-  .heart { font-size: 1rem; }
-  .heart.lost { opacity: .2; }
+/* ── 피드백 ── */
+.feedback {
+  margin-top:.9rem; padding:.85rem 1rem; border-radius:8px;
+  font-size:.88rem; line-height:1.7; display:none;
+}
+.feedback.show { display:block; animation:fadeUp .3s; }
+.feedback.ok { background:rgba(45,156,90,.15); border:1px solid var(--success); }
+.feedback.bad { background:rgba(230,57,70,.12); border:1px solid var(--accent); }
+.feedback .ftitle { font-weight:700; margin-bottom:.3rem; }
 
-  .choices {
-    display: grid;
-    gap: .6rem;
-  }
-  .choice-btn {
-    width: 100%;
-    background: #0d0d16;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: .85rem 1rem;
-    text-align: left;
-    color: var(--text);
-    cursor: pointer;
-    font-size: .93rem;
-    line-height: 1.5;
-    transition: all .2s;
-    font-family: inherit;
-    display: flex;
-    align-items: flex-start;
-    gap: .7rem;
-  }
-  .choice-btn:hover:not(:disabled) {
-    border-color: var(--accent2);
-    background: #141422;
-    transform: translateX(4px);
-  }
-  .choice-btn .choice-num {
-    min-width: 22px; height: 22px;
-    border-radius: 50%;
-    background: var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: .75rem; font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-  .choice-btn.correct { border-color: var(--success); background: rgba(45,156,90,.12); }
-  .choice-btn.wrong { border-color: var(--accent); background: rgba(230,57,70,.1); }
-  .choice-btn:disabled { cursor: default; }
+/* ── 탈출 오버레이 ── */
+.esc-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.9); z-index:100;
+  align-items:center; justify-content:center; padding:1.5rem;
+}
+.esc-overlay.show { display:flex; animation:fadeUp .4s; }
+.esc-card {
+  background:var(--panel); border:1px solid var(--success);
+  box-shadow:0 0 50px rgba(45,156,90,.3);
+  border-radius:14px; padding:2.5rem 2rem;
+  max-width:480px; width:100%; text-align:center;
+}
+.esc-card .big { font-size:3.5rem; margin-bottom:.6rem; }
+.esc-card h2 { color:var(--success); font-size:1.5rem; margin-bottom:.5rem; }
+.esc-card p { color:var(--dim); line-height:1.7; font-size:.92rem; margin-bottom:.5rem; }
+.door-anim {
+  font-size:4rem; margin:1rem 0;
+  animation:doorOpen 1s ease forwards;
+}
+@keyframes doorOpen {
+  0%{transform:perspective(400px) rotateY(0deg)}
+  100%{transform:perspective(400px) rotateY(-70deg)}
+}
 
-  /* 피드백 */
-  .feedback {
-    margin-top: 1rem;
-    padding: .9rem 1.1rem;
-    border-radius: 8px;
-    font-size: .9rem;
-    line-height: 1.7;
-    display: none;
-  }
-  .feedback.show { display: block; animation: fadeIn .3s; }
-  .feedback.ok { background: rgba(45,156,90,.15); border: 1px solid var(--success); }
-  .feedback.bad { background: rgba(230,57,70,.12); border: 1px solid var(--accent); }
-  .feedback .hint-title { font-weight: 700; margin-bottom: .3rem; }
+/* ── 재도전 ── */
+#retry-screen { text-align:center; padding:3rem 1.5rem; }
+#retry-screen .big-e { font-size:3.5rem; margin-bottom:1rem; }
+#retry-screen h2 { font-size:1.4rem; color:var(--accent); margin-bottom:.5rem; }
+#retry-screen p { color:var(--dim); margin-bottom:1.3rem; }
+.retry-hint {
+  background:var(--panel); border:1px solid var(--border);
+  border-left:4px solid var(--warning); border-radius:8px;
+  padding:1rem 1.2rem; text-align:left; margin-bottom:1.5rem;
+  font-size:.88rem; line-height:1.8; white-space:pre-line;
+}
 
-  /* 탈출 성공 오버레이 */
-  .escape-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.85);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 1.5rem;
-  }
-  .escape-overlay.show { display: flex; animation: fadeIn .4s; }
-  .escape-card {
-    background: var(--panel);
-    border: 1px solid var(--success);
-    box-shadow: 0 0 40px rgba(45,156,90,.3);
-    border-radius: 12px;
-    padding: 2.5rem 2rem;
-    max-width: 480px;
-    width: 100%;
-  }
-  .escape-card .big-emoji { font-size: 4rem; margin-bottom: .7rem; }
-  .escape-card h2 { color: var(--success); font-size: 1.6rem; margin-bottom: .5rem; }
-  .escape-card p { color: var(--text-dim); line-height: 1.7; font-size: .95rem; }
+/* ── 엔딩 ── */
+#ending-screen { text-align:center; padding:2.5rem 1.5rem; }
+.ending-grade { font-size:4rem; margin-bottom:.5rem; }
+#ending-screen h1 { font-size:2rem; color:var(--warning); margin-bottom:.3rem; }
+.final-score { font-size:3rem; font-weight:900; color:var(--accent); margin:.5rem 0; }
+.grade-label { font-size:1rem; color:var(--dim); margin-bottom:1.5rem; }
+.miya-ending {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:12px; padding:1.3rem; margin-bottom:1.5rem;
+  display:flex; gap:.9rem; align-items:flex-start; text-align:left;
+}
+.miya-ending .face { font-size:2.5rem; flex-shrink:0; }
+.miya-ending-text { font-size:.9rem; line-height:1.8; color:#c8c8e8; }
+.summary {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:10px; padding:1rem; margin-bottom:1.5rem; text-align:left;
+}
+.summary h3 { color:#457b9d; margin-bottom:.7rem; font-size:.88rem; }
+.si { display:flex; align-items:center; gap:.7rem; padding:.4rem 0; font-size:.84rem; border-bottom:1px solid var(--border); }
+.si:last-child { border-bottom:none; }
+.si .ico { font-size:1.2rem; }
 
-  /* 엔딩 화면 */
-  #ending-screen {
-    text-align: center;
-    padding: 2.5rem 1.5rem;
-  }
-  .ending-trophy { font-size: 5rem; margin-bottom: 1rem; }
-  #ending-screen h1 { font-size: 2.2rem; color: var(--warning); margin-bottom: .5rem; }
-  #ending-screen .ending-subtitle { color: var(--text-dim); margin-bottom: 1.5rem; font-size: 1rem; }
-  .ending-summary {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.2rem;
-    margin-bottom: 1.5rem;
-    text-align: left;
-  }
-  .ending-summary h3 { color: var(--accent2); margin-bottom: .8rem; font-size: .95rem; }
-  .summary-item {
-    display: flex;
-    align-items: center;
-    gap: .7rem;
-    padding: .45rem 0;
-    font-size: .88rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .summary-item:last-child { border-bottom: none; }
-  .summary-item .si-icon { font-size: 1.2rem; }
+/* ── 파티클 ── */
+@keyframes pFly { 0%{transform:translateY(0)scale(1);opacity:1;} 100%{transform:translateY(-130px)scale(0);opacity:0;} }
+.particle { position:fixed; font-size:1.5rem; pointer-events:none; animation:pFly 1.3s ease-out forwards; z-index:200; }
 
-  /* 재도전 화면 */
-  #retry-screen {
-    text-align: center;
-    padding: 3rem 1.5rem;
-  }
-  #retry-screen .big-emoji { font-size: 3.5rem; margin-bottom: 1rem; }
-  #retry-screen h2 { font-size: 1.5rem; color: var(--accent); margin-bottom: .5rem; }
-  #retry-screen p { color: var(--text-dim); margin-bottom: 1.5rem; }
-  .retry-hint-box {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--warning);
-    border-radius: 8px;
-    padding: 1rem 1.2rem;
-    text-align: left;
-    margin-bottom: 1.5rem;
-    font-size: .9rem;
-    line-height: 1.8;
-  }
+/* ── 점수 팝업 ── */
+.score-pop {
+  position:fixed; font-size:1.1rem; font-weight:900;
+  color:#fff; pointer-events:none; z-index:201;
+  animation:scoreFloat 1.2s ease-out forwards;
+}
+@keyframes scoreFloat { 0%{transform:translateY(0);opacity:1;} 100%{transform:translateY(-70px);opacity:0;} }
 
-  /* 모바일 */
-  @media (max-width: 480px) {
-    #title-screen h1 { font-size: 1.5rem; }
-    .game-logo { font-size: 2.5rem; }
-    .room-title { font-size: 1.05rem; }
-    .choice-btn { font-size: .85rem; padding: .7rem .85rem; }
-  }
-
-  /* 파티클 효과 */
-  @keyframes particleFly {
-    0% { transform: translateY(0) scale(1); opacity:1; }
-    100% { transform: translateY(-120px) scale(0); opacity:0; }
-  }
-  .particle {
-    position: fixed;
-    font-size: 1.5rem;
-    pointer-events: none;
-    animation: particleFly 1.2s ease-out forwards;
-    z-index: 200;
-  }
+/* ── 모바일 ── */
+@media(max-width:480px) {
+  #title-screen h1 { font-size:1.5rem; }
+  .title-logo { font-size:2.8rem; }
+  .room-title { font-size:1rem; }
+  .choice-btn { font-size:.82rem; padding:.65rem .85rem; }
+  .game-header { gap:.5rem; }
+  .score-num { font-size:1.1rem; }
+}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- 시작 화면 -->
-  <div id="title-screen" class="screen active">
-    <div class="game-logo">🏥</div>
-    <h1>응급처치 방탈출</h1>
-    <p class="subtitle">중학교 보건 4단원 · 생명을 구하는 선택</p>
-    <div class="story-box">
-      <strong>📣 학교 축제 날, 비상사태 발생!</strong><br><br>
-      신나는 축제 한가운데, 갑자기 친구들이 하나둘 다치기 시작한다.<br>
-      지혈을 해야 할 친구, 화상을 입은 친구, 뼈가 부러진 친구…<br>
-      그리고 쓰러진 친구까지.<br><br>
-      <strong>올바른 응급처치를 선택해 5개의 방을 탈출하라!</strong><br>
-      잘못된 처치는 친구를 더 위험하게 만들 수 있다. 신중하게 선택하자.
-    </div>
-    <button class="btn btn-primary" onclick="startGame()">🚨 구조 시작하기</button>
-  </div>
-
-  <!-- 게임 화면 -->
-  <div id="game-screen" class="screen">
-    <div class="game-header">
-      <div class="progress-dots" id="progress-dots"></div>
-      <div class="room-label" id="room-label">방 1/5</div>
-      <div id="timer-wrap">
-        <span id="timer-icon">⏱️</span>
-        <span id="timer-display">60</span>
-      </div>
-    </div>
-    <div class="game-body">
-      <div class="room-title" id="room-title"></div>
-      <div class="scene-box" id="scene-text"></div>
-      <div class="tries-bar" id="tries-bar"></div>
-      <div class="choices" id="choices-wrap"></div>
-      <div class="feedback" id="feedback"></div>
+<!-- 타이틀 -->
+<div id="title-screen" class="screen active">
+  <div class="title-logo">🏥</div>
+  <h1>응급처치 방탈출</h1>
+  <p class="sub">중학교 보건 4단원 · 생명을 구하는 선택</p>
+  <div class="story-card">
+    <strong>📣 학교 축제 날, 비상사태 발생!</strong><br><br>
+    신나는 축제 한가운데, 갑자기 친구들이 하나둘 다치기 시작한다.<br>
+    지혈을 해야 할 친구, 화상을 입은 친구, 뼈가 부러진 친구…<br>
+    그리고 쓰러진 친구까지.<br><br>
+    <strong>올바른 응급처치를 선택해 5개의 방을 탈출하라!</strong><br>
+    잘못된 처치는 친구를 더 위험하게 만들 수 있다.
+    <div class="miya-intro">
+      <div class="miya-face">👩‍⚕️</div>
+      <div>"안녕! 나는 보건실 도우미 <strong>미야</strong>야. 네가 응급처치를 올바르게 선택하도록 도와줄게. 준비됐어? 골든타임을 지키자! 💪"</div>
     </div>
   </div>
-
-  <!-- 재도전 화면 -->
-  <div id="retry-screen" class="screen">
-    <div class="big-emoji">😰</div>
-    <h2>응급처치 실패!</h2>
-    <p id="retry-msg">3번 모두 틀렸습니다. 교과서를 참고해 다시 도전해봐요!</p>
-    <div class="retry-hint-box" id="retry-hint"></div>
-    <button class="btn btn-primary" onclick="retryRoom()">🔄 이 방 다시 도전</button><br>
-    <button class="btn btn-secondary" onclick="restartGame()">처음부터 다시</button>
-  </div>
-
-  <!-- 엔딩 화면 -->
-  <div id="ending-screen" class="screen">
-    <div class="ending-trophy">🏆</div>
-    <h1>생명의 은인!</h1>
-    <p class="ending-subtitle">5개의 방을 모두 탈출하고 친구들을 구했습니다!</p>
-    <div class="ending-summary">
-      <h3>📋 오늘 배운 응급처치 핵심 요약</h3>
-      <div class="summary-item"><span class="si-icon">🩸</span><span><strong>피부손상:</strong> 지혈 → 세척 → 소독 순서 반드시 지키기</span></div>
-      <div class="summary-item"><span class="si-icon">🔥</span><span><strong>화상:</strong> 흐르는 찬물 10분 이상, 된장·소주·물집 제거 절대 금지</span></div>
-      <div class="summary-item"><span class="si-icon">🦴</span><span><strong>근골격계:</strong> PRICE (보호→휴식→냉찜질→압박→거상)</span></div>
-      <div class="summary-item"><span class="si-icon">😮</span><span><strong>기도폐쇄:</strong> 등 두드리기 5회 + 하임리히법 5회 반복</span></div>
-      <div class="summary-item"><span class="si-icon">❤️</span><span><strong>심폐소생술:</strong> 30:2 / 5cm / 100~120회/분 / AED 빠른 제세동</span></div>
-    </div>
-    <button class="btn btn-primary" onclick="restartGame()">🔄 다시 플레이</button>
-  </div>
-
+  <button class="btn btn-red" onclick="startGame()">🚨 구조 시작하기</button>
 </div>
 
-<!-- 탈출 성공 오버레이 -->
-<div class="escape-overlay" id="escape-overlay">
-  <div class="escape-card">
-    <div class="big-emoji" id="esc-emoji">🎉</div>
+<!-- 게임 -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <div class="progress-dots" id="progress-dots"></div>
+    <div class="score-wrap">
+      <div class="score-label">SCORE</div>
+      <div class="score-num" id="score-display">0</div>
+    </div>
+    <div class="timer-wrap">
+      <span>⏱️</span>
+      <span id="timer-display">60</span>
+    </div>
+  </div>
+  <div class="game-body">
+    <div class="room-title">
+      <span class="lock-icon" id="lock-icon">🔒</span>
+      <span id="room-title-text"></span>
+    </div>
+    <div class="miya-bubble">
+      <div class="face">👩‍⚕️</div>
+      <div class="miya-text" id="miya-text"></div>
+    </div>
+    <div class="scene-box" id="scene-text"></div>
+    <div class="status-row">
+      <div class="hearts" id="hearts"></div>
+      <div class="step-label" id="step-label"></div>
+    </div>
+    <div class="hint-row">
+      <button class="hint-btn" onclick="showHint()">💡 힌트 보기 (-20점)</button>
+    </div>
+    <div class="hint-box" id="hint-box"></div>
+    <div id="quiz-area"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+</div>
+
+<!-- 재도전 -->
+<div id="retry-screen" class="screen">
+  <div class="big-e">😰</div>
+  <h2>응급처치 실패!</h2>
+  <p id="retry-msg"></p>
+  <div class="retry-hint" id="retry-hint"></div>
+  <div class="miya-bubble" style="margin-bottom:1.2rem;">
+    <div class="face">👩‍⚕️</div>
+    <div class="miya-text">"괜찮아! 실수에서 배우는 거야. 힌트를 잘 읽고 다시 도전해봐! 넌 할 수 있어 💪"</div>
+  </div>
+  <button class="btn btn-red" onclick="retryRoom()">🔄 이 방 다시 도전</button><br>
+  <button class="btn btn-ghost" onclick="restartGame()">처음부터 다시</button>
+</div>
+
+<!-- 엔딩 -->
+<div id="ending-screen" class="screen">
+  <div class="ending-grade" id="ending-grade">🏆</div>
+  <h1 id="ending-title">생명의 은인!</h1>
+  <div class="final-score" id="final-score">0점</div>
+  <div class="grade-label" id="grade-label"></div>
+  <div class="miya-ending">
+    <div class="face">👩‍⚕️</div>
+    <div class="miya-ending-text" id="miya-ending-text"></div>
+  </div>
+  <div class="summary">
+    <h3>📋 오늘 배운 응급처치 핵심</h3>
+    <div class="si"><span class="ico">🩸</span><span><strong>피부손상:</strong> 지혈 → 세척 → 소독 순서 반드시 지키기</span></div>
+    <div class="si"><span class="ico">🔥</span><span><strong>화상:</strong> 흐르는 찬물 10분 이상, 된장·소주·물집 절대 금지</span></div>
+    <div class="si"><span class="ico">🦴</span><span><strong>근골격계:</strong> PRICE (보호→휴식→냉찜질→압박→거상)</span></div>
+    <div class="si"><span class="ico">😮</span><span><strong>기도폐쇄:</strong> 등 두드리기 5회 + 하임리히법 5회 반복</span></div>
+    <div class="si"><span class="ico">❤️</span><span><strong>심폐소생술:</strong> 30:2 / 5cm / 100~120회/분 / AED 즉시 사용</span></div>
+  </div>
+  <div id="score-breakdown" style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1.5rem;text-align:left;font-size:.85rem;line-height:1.9;"></div>
+  <button class="btn btn-red" onclick="restartGame()">🔄 다시 플레이</button>
+</div>
+
+</div><!-- #app -->
+
+<!-- 탈출 오버레이 -->
+<div class="esc-overlay" id="esc-overlay">
+  <div class="esc-card">
+    <div class="door-anim" id="esc-door">🚪</div>
+    <div class="big" id="esc-emoji">🎉</div>
     <h2 id="esc-title">탈출 성공!</h2>
     <p id="esc-desc"></p>
+    <p id="esc-score-info" style="color:var(--warning);font-weight:700;font-size:1rem;"></p>
     <br>
-    <button class="btn btn-primary" id="esc-btn" onclick="nextRoom()">다음 방으로 →</button>
+    <button class="btn btn-red" id="esc-btn" onclick="nextStep()">다음으로 →</button>
   </div>
 </div>
 
 <script>
-// ──────────────────────────────────────────────
-//  게임 데이터
-// ──────────────────────────────────────────────
+// ══════════════════════════════════════════════
+//  데이터
+// ══════════════════════════════════════════════
 const ROOMS = [
-  {
-    id: 1,
-    icon: '🩸',
-    title: '방 1 · 피부 손상',
-    scene: `체육관 무대 설치를 돕던 <span class="character">민준</span>이가 못에 손을 긁혔다. 상처에서 피가 흐르고 있다.<br><br>
-"아, 피 나!" 당황한 민준이가 손을 들어올렸다. 무엇을 먼저 해야 할까?`,
-    question: '올바른 응급처치 순서를 선택하세요.',
-    choices: [
-      { text: '① 소독약을 먼저 바르고 → 깨끗한 물로 씻은 뒤 → 지혈한다.', correct: false },
-      { text: '② 깨끗한 천으로 지혈하고 → 흐르는 물로 세척한 뒤 → 소독한다.', correct: true },
-      { text: '③ 물로 씻은 뒤 → 지혈하고 → 소독약을 바른다.', correct: false },
-      { text: '④ 상처가 작으니 그냥 두고 지켜본다.', correct: false },
+ {
+  id:1, icon:'🩸', bodyClass:'room-1',
+  title:'방 1 · 피부 손상 (학교 복도)',
+  lockColor:'#2d9c5a',
+  miyaEnter:'잠깐! 친구가 못에 긁혀서 피가 나고 있어! 네가 도와줘야 해! 서둘러!',
+  steps:[
+   {
+    type:'mc',
+    scene:'체육관 무대 설치를 돕던 <span class="char">민준</span>이가 못에 손을 긁혔다. 상처에서 피가 흐르고 있다.\n\n"아, 피 나!" 당황한 민준이가 손을 들어올렸다. 무엇을 먼저 해야 할까?',
+    question:'피부 손상 시 가장 먼저 해야 할 처치는?',
+    choices:[
+     {t:'소독약을 먼저 바른다.', c:false},
+     {t:'깨끗한 천으로 눌러 지혈한다.', c:true},
+     {t:'흐르는 물로 씻는다.', c:false},
+     {t:'상처가 작으니 그냥 둔다.', c:false},
     ],
-    correctFeedback: `정답입니다! 🎉<br><br>
-<strong>피부 손상 응급처치 3단계:</strong><br>
-1️⃣ <strong>지혈</strong> – 깨끗한 천·거즈로 눌러 지혈 (직접 압박법)<br>
-2️⃣ <strong>세척</strong> – 흐르는 깨끗한 물로 이물질 제거<br>
-3️⃣ <strong>소독</strong> – 소독약을 바르고 드레싱<br><br>
-지혈이 먼저인 이유: 출혈이 지속되면 쇼크 위험이 있기 때문!`,
-    wrongFeedback: `❌ 틀렸습니다.<br><br>
-<strong>힌트:</strong> 피부 손상의 처치 순서는 <strong>지혈 → 세척 → 소독</strong>입니다.<br>
-소독을 먼저 하면 상처 안에 이물질이 그대로 남고,<br>세척을 먼저 하면 출혈이 계속됩니다. 지혈이 가장 먼저!`,
-    escapeEmoji: '🩹',
-    escapeTitle: '민준이를 구했습니다!',
-    escapeDesc: '깔끔한 지혈과 소독으로 민준이의 상처가 안정됐습니다. 다음 방으로 이동하세요!',
-    fullHint: `피부 손상 응급처치 순서: 지혈 → 세척 → 소독\n\n• 지혈: 깨끗한 천으로 직접 압박\n• 세척: 흐르는 물로 이물질 제거\n• 소독: 소독약 도포 후 드레싱\n\n소독 → 지혈 순서는 잘못된 처치입니다!`,
-  },
-  {
-    id: 2,
-    icon: '🔥',
-    title: '방 2 · 화상',
-    scene: `요리 체험 부스에서 <span class="character">서연</span>이가 끓는 물을 팔뚝에 쏟았다. 피부가 빨갛게 달아오르고 물집이 생기기 시작한다.<br><br>
-옆에 있던 친구들이 저마다 다른 방법을 말한다. 올바른 처치는?`,
-    question: '화상에 대한 올바른 응급처치를 선택하세요.',
-    choices: [
-      { text: '① 된장을 발라 열을 식힌다.', correct: false },
-      { text: '② 물집을 터뜨려 진물을 빼낸 뒤 소독약을 바른다.', correct: false },
-      { text: '③ 흐르는 찬물에 10분 이상 식히고, 물집은 그대로 둔다.', correct: true },
-      { text: '④ 소주를 부어 소독하고 빨리 붕대로 감는다.', correct: false },
+    correct:'지혈이 먼저! 출혈이 지속되면 쇼크 위험이 있습니다.',
+    wrong:'힌트: 피부 손상은 <strong>지혈</strong>이 가장 먼저입니다. 소독이나 세척보다 먼저 지혈해야 해요.',
+    hint:'교과서: 피부 손상 시 직접 압박법으로 지혈을 먼저 시행합니다.',
+   },
+   {
+    type:'drag',
+    scene:'지혈을 완료했어! 이제 상처를 완전히 처치해야 해. 올바른 응급처치 순서를 배열해봐!',
+    question:'피부 손상 처치 순서를 올바르게 배열하세요.',
+    items:['① 소독약 바르기','② 흐르는 물로 세척','③ 깨끗한 천으로 지혈'],
+    correctOrder:[2,1,0],
+    correct:'완벽해! 지혈 → 세척 → 소독 순서가 맞아요!',
+    wrong:'순서가 틀렸어요. 지혈 → 세척 → 소독 순서를 기억하세요!',
+    hint:'교과서 166쪽: 피부 손상 응급처치는 지혈→세척→소독 순서로 시행합니다.',
+   },
+  ],
+  fullHint:'피부 손상 응급처치: 지혈 → 세척 → 소독\n\n• 지혈: 깨끗한 천으로 직접 압박\n• 세척: 흐르는 물로 이물질 제거\n• 소독: 소독약 도포 후 드레싱',
+  escEmoji:'🩹', escTitle:'민준이를 구했습니다!',
+  escDesc:'깔끔한 지혈과 소독으로 민준이의 상처가 안정됐습니다!',
+ },
+ {
+  id:2, icon:'🔥', bodyClass:'room-2',
+  title:'방 2 · 화상 (급식실)',
+  lockColor:'#f4a261',
+  miyaEnter:'큰일 났어! 급식실에서 끓는 물이 쏟아졌어! 화상 처치법을 기억해?',
+  steps:[
+   {
+    type:'mc',
+    scene:'요리 체험 부스에서 <span class="char">서연</span>이가 끓는 물을 팔뚝에 쏟았다. 피부가 빨갛게 달아오르고 물집이 생기기 시작한다.\n\n옆 친구들이 된장, 소주, 치약을 가져오려 한다. 올바른 처치는?',
+    question:'화상 처치로 올바른 것은?',
+    choices:[
+     {t:'된장을 발라 열을 식힌다.', c:false},
+     {t:'물집을 터뜨려 진물을 빼낸다.', c:false},
+     {t:'흐르는 찬물에 10분 이상 식힌다.', c:true},
+     {t:'소주를 부어 소독한다.', c:false},
     ],
-    correctFeedback: `정답입니다! 🎉<br><br>
-<strong>화상 응급처치 핵심:</strong><br>
-✅ <strong>흐르는 찬물에 10분 이상</strong> 식히기 (통증 감소, 2차 손상 예방)<br>
-✅ <strong>물집 그대로 두기</strong> – 터뜨리면 감염 위험!<br><br>
-<strong>절대 금지:</strong><br>
-🚫 된장·치약·소주·기름 – 감염·화학적 손상 유발<br>
-🚫 물집 제거 – 피부 보호막 파괴<br>
-🚫 얼음 직접 접촉 – 동상 위험`,
-    wrongFeedback: `❌ 틀렸습니다.<br><br>
-<strong>힌트:</strong> 화상에는 <strong>흐르는 찬물 10분 이상</strong>이 정답!<br>
-된장·소주·치약은 오히려 감염을 일으킵니다.<br>
-물집은 피부 보호막 역할 — 절대 터뜨리지 마세요!`,
-    escapeEmoji: '💧',
-    escapeTitle: '서연이를 구했습니다!',
-    escapeDesc: '찬물로 열을 식히고 병원으로 이송 준비 완료! 서연이가 고맙다고 웃었습니다.',
-    fullHint: `화상 응급처치:\n\n✅ 흐르는 찬물 10분 이상 식히기\n✅ 물집 터뜨리지 않기\n✅ 심한 경우 즉시 병원 이송\n\n절대 금지:\n🚫 된장, 치약, 소주, 기름\n🚫 물집 제거\n🚫 얼음 직접 접촉`,
-  },
-  {
-    id: 3,
-    icon: '🦴',
-    title: '방 3 · 근골격계 손상',
-    scene: `농구 경기 중 <span class="character">태호</span>가 점프 후 착지하다가 발목을 삐었다. 발목이 빠르게 부어오르고 움직이기 힘들어 보인다.<br><br>
-"으악, 발목이!" 태호가 바닥에 주저앉았다. PRICE 요법을 적용해야 한다!`,
-    question: 'PRICE 요법의 올바른 순서를 고르세요.',
-    choices: [
-      { text: '① 보호(Protection) → 휴식(Rest) → 냉찜질(Ice) → 압박(Compression) → 거상(Elevation)', correct: true },
-      { text: '② 냉찜질(Ice) → 압박(Compression) → 휴식(Rest) → 보호(Protection) → 거상(Elevation)', correct: false },
-      { text: '③ 휴식(Rest) → 온찜질(Heat) → 압박(Compression) → 마사지 → 거상(Elevation)', correct: false },
-      { text: '④ 거상(Elevation) → 보호(Protection) → 마사지 → 냉찜질(Ice) → 압박(Compression)', correct: false },
+    correct:'정답! 흐르는 찬물 10분 이상이 핵심이에요. 된장·소주는 절대 금지!',
+    wrong:'힌트: 화상에는 <strong>흐르는 찬물 10분 이상</strong>이 유일한 정답입니다.',
+    hint:'교과서 168쪽: 화상 부위에 된장을 바르면 세균 감염의 원인이 됩니다.',
+   },
+   {
+    type:'mc',
+    scene:'찬물로 열을 식혔어. 그런데 피부에 물집이 크게 잡혔어! 다음 처치는?',
+    question:'화상 물집에 대한 올바른 처치는?',
+    choices:[
+     {t:'바늘로 터뜨려 진물을 빼낸다.', c:false},
+     {t:'물집은 그대로 두고 병원으로 이송한다.', c:true},
+     {t:'얼음을 직접 대어 차갑게 한다.', c:false},
+     {t:'기름을 발라 수분을 보충한다.', c:false},
     ],
-    correctFeedback: `정답입니다! 🎉<br><br>
-<strong>PRICE 요법 5단계:</strong><br>
-🛡️ <strong>P</strong>rotection – 부목 등으로 손상 부위 보호<br>
-😴 <strong>R</strong>est – 움직임 최소화, 안정<br>
-🧊 <strong>I</strong>ce – 냉찜질 (20분 적용·20분 휴식, 직접 접촉 금지)<br>
-🩹 <strong>C</strong>ompression – 탄력 붕대로 압박 (순환 장애 주의)<br>
-🦵 <strong>E</strong>levation – 심장보다 높이 올려 부기 감소<br><br>
-온찜질은 급성기(48시간)에 금지! 부기를 악화시킵니다.`,
-    wrongFeedback: `❌ 틀렸습니다.<br><br>
-<strong>힌트:</strong> PRICE의 첫 글자를 기억하세요!<br>
-<strong>P</strong>rotection → <strong>R</strong>est → <strong>I</strong>ce → <strong>C</strong>ompression → <strong>E</strong>levation<br>
-온찜질(Heat)이나 마사지는 급성기에 부기를 악화시킵니다!`,
-    escapeEmoji: '🧊',
-    escapeTitle: '태호를 구했습니다!',
-    escapeDesc: 'PRICE 요법으로 태호의 발목 부기가 줄었습니다. 보건실로 이동 완료!',
-    fullHint: `PRICE 요법 (근골격계 손상):\n\nP - Protection (보호)\nR - Rest (휴식)\nI - Ice (냉찜질, 20분 적용/20분 휴식)\nC - Compression (압박)\nE - Elevation (거상, 심장보다 높게)\n\n온찜질·마사지는 급성기에 금지!`,
-  },
-  {
-    id: 4,
-    icon: '😮',
-    title: '방 4 · 기도 폐쇄',
-    scene: `음식 체험 부스에서 먹방 대결을 하던 <span class="character">유진</span>이가 떡을 급하게 먹다가 목에 걸렸다! 기침을 못 하고 얼굴이 붉어지더니 파랗게 변하기 시작한다.<br><br>
-의식은 있지만 숨을 쉬지 못하고 있다. 즉각 행동해야 한다!`,
-    question: '기도 폐쇄(이물질 걸림) 시 올바른 처치를 고르세요.',
-    choices: [
-      { text: '① 물을 마시게 해서 이물질을 내려보낸다.', correct: false },
-      { text: '② 등 두드리기 5회와 하임리히법 5회를 번갈아 반복한다.', correct: true },
-      { text: '③ 손가락을 입 안에 넣어 이물질을 직접 꺼낸다.', correct: false },
-      { text: '④ 눕혀서 심폐소생술을 즉시 시작한다.', correct: false },
+    correct:'정답! 물집은 피부 보호막 역할을 해요. 터뜨리면 감염 위험이 높아집니다!',
+    wrong:'힌트: 화상 물집은 <strong>절대 터뜨리지 마세요!</strong> 피부 보호막 역할을 합니다.',
+    hint:'교과서: 물집을 터뜨리면 피부 보호막이 파괴되어 세균 감염 위험이 높아집니다.',
+   },
+  ],
+  fullHint:'화상 응급처치:\n✅ 흐르는 찬물 10분 이상\n✅ 물집 터뜨리지 않기\n🚫 된장, 치약, 소주, 기름 금지\n🚫 얼음 직접 접촉 금지',
+  escEmoji:'💧', escTitle:'서연이를 구했습니다!',
+  escDesc:'찬물로 열을 식히고 병원 이송 준비 완료! 서연이가 고맙다고 웃었습니다.',
+ },
+ {
+  id:3, icon:'🦴', bodyClass:'room-3',
+  title:'방 3 · 근골격계 손상 (체육관)',
+  lockColor:'#457b9d',
+  miyaEnter:'체육관에서 사고가 났어! PRICE 요법 기억해? 순서가 중요해!',
+  steps:[
+   {
+    type:'drag',
+    scene:'농구 경기 중 <span class="char">태호</span>가 점프 후 착지하다가 발목을 삐었다. 발목이 빠르게 부어오른다. PRICE 요법을 올바른 순서로 배열해봐!',
+    question:'PRICE 요법의 순서를 올바르게 배열하세요.',
+    items:['🧊 Ice (냉찜질)','🛡️ Protection (보호)','🦵 Elevation (거상)','😴 Rest (휴식)','🩹 Compression (압박)'],
+    correctOrder:[1,3,0,4,2],
+    correct:'완벽해! P→R→I→C→E 순서가 맞아요!',
+    wrong:'PRICE 순서: Protection → Rest → Ice → Compression → Elevation',
+    hint:'교과서: PRICE는 보호→휴식→냉찜질→압박→거상 순서입니다.',
+   },
+   {
+    type:'mc',
+    scene:'발목에 PRICE 요법을 적용했어. 그런데 태호가 "온찜질하면 더 빨리 낫지 않아요?"라고 물어봤어. 뭐라고 대답할까?',
+    question:'급성 근골격계 손상 초기에 온찜질을 하면 안 되는 이유는?',
+    choices:[
+     {t:'온찜질은 효과가 없어서', c:false},
+     {t:'온찜질은 혈관을 확장시켜 부기를 악화시키기 때문', c:true},
+     {t:'온찜질은 너무 뜨거워서 화상을 입기 때문', c:false},
+     {t:'온찜질은 48시간 후에만 효과가 있어서', c:false},
     ],
-    correctFeedback: `정답입니다! 🎉<br><br>
-<strong>기도 폐쇄 응급처치 (의식 있는 경우):</strong><br>
-1️⃣ <strong>등 두드리기 5회</strong> – 어깨뼈 사이를 손바닥 뒤꿈치로 강하게 5회<br>
-2️⃣ <strong>하임리히법(복부 밀쳐올리기) 5회</strong> – 명치 아래 주먹을 대고 위쪽으로 밀어올리기<br>
-3️⃣ 이물질 제거까지 반복<br><br>
-<strong>주의:</strong><br>
-🚫 입 안에 손가락 넣기 – 이물질이 더 들어갈 수 있음<br>
-🚫 물 마시게 하기 – 기도 완전 막힘 위험<br>
-👶 영아: 등 두드리기 + 가슴 밀어내기 사용`,
-    wrongFeedback: `❌ 틀렸습니다.<br><br>
-<strong>힌트:</strong> 의식이 있는 기도 폐쇄 환자에게는<br>
-<strong>등 두드리기 5회 + 하임리히법 5회</strong>를 이물질이 나올 때까지 반복합니다.<br>
-물을 마시게 하거나 손가락을 넣으면 더 위험해질 수 있습니다!`,
-    escapeEmoji: '😮‍💨',
-    escapeTitle: '유진이를 구했습니다!',
-    escapeDesc: '하임리히법으로 떡이 튀어나왔습니다! 유진이가 크게 숨을 들이쉬었습니다.',
-    fullHint: `기도 폐쇄 응급처치 (의식 있는 경우):\n\n① 등 두드리기 5회 (어깨뼈 사이)\n② 하임리히법 5회 (복부 밀쳐올리기)\n③ 이물질 제거될 때까지 반복\n\n금지:\n• 물 마시게 하기\n• 손가락으로 이물질 꺼내기`,
-  },
-  {
-    id: 5,
-    icon: '❤️',
-    title: '방 5 · 심폐소생술 + AED',
-    scene: `교장 선생님이 강당에서 갑자기 쓰러지셨다! 의식도 없고 정상적인 호흡도 없다.<br>
-누군가 이미 119에 신고했고, AED가 근처 벽에 있다.<br><br>
-<span class="character">생존 사슬</span>의 고리를 이어야 한다. 지금 당장 무엇을 해야 하는가?`,
-    question: '올바른 심폐소생술 방법을 고르세요.',
-    choices: [
-      { text: '① 인공호흡 2회 → 가슴 압박 30회 순서로, 압박 깊이 3cm, 분당 60회 속도로 한다.', correct: false },
-      { text: '② 가슴 압박 30회(5cm 깊이, 100~120회/분) → 인공호흡 2회 반복, AED 도착 시 즉시 사용한다.', correct: true },
-      { text: '③ AED가 도착할 때까지 기다렸다가 AED만 사용한다.', correct: false },
-      { text: '④ 가슴 압박만 무한 반복하고 인공호흡은 하지 않는다.', correct: false },
+    correct:'정답! 급성기에 온찜질은 혈관 확장으로 부기를 악화시킵니다. 48시간 후에 사용해요.',
+    wrong:'힌트: 급성 손상 초기에 온찜질은 <strong>부기를 악화</strong>시킵니다.',
+    hint:'교과서: 급성기(48시간 내)에는 냉찜질을 사용하고, 이후 온찜질을 사용합니다.',
+   },
+  ],
+  fullHint:'PRICE 요법:\nP - Protection (보호)\nR - Rest (휴식)\nI - Ice (냉찜질, 20분/20분)\nC - Compression (압박)\nE - Elevation (심장보다 높게)\n\n온찜질은 급성기(48시간) 금지!',
+  escEmoji:'🧊', escTitle:'태호를 구했습니다!',
+  escDesc:'PRICE 요법으로 태호의 발목이 안정됐습니다!',
+ },
+ {
+  id:4, icon:'😮', bodyClass:'room-4',
+  title:'방 4 · 기도 폐쇄 (식당)',
+  lockColor:'#9b5de5',
+  miyaEnter:'식당에서 친구 목에 음식이 걸렸어! 빨리! 의식이 있을 때가 골든타임이야!',
+  steps:[
+   {
+    type:'mc',
+    scene:'음식 체험 부스에서 <span class="char">유진</span>이가 떡을 급하게 먹다가 목에 걸렸다! 기침을 못 하고 얼굴이 파랗게 변한다.\n\n의식은 있지만 숨을 쉬지 못하고 있다!',
+    question:'의식이 있는 기도 폐쇄 환자에게 해야 할 첫 번째 처치는?',
+    choices:[
+     {t:'물을 마시게 해서 이물질을 내려보낸다.', c:false},
+     {t:'어깨뼈 사이를 손바닥 뒤꿈치로 강하게 두드린다 (5회).', c:true},
+     {t:'손가락을 입 안에 넣어 이물질을 꺼낸다.', c:false},
+     {t:'즉시 눕혀서 심폐소생술을 시작한다.', c:false},
     ],
-    correctFeedback: `정답입니다! 🎉<br><br>
-<strong>심폐소생술(CPR) 핵심:</strong><br>
-💓 <strong>가슴 압박 30회</strong> : <strong>인공호흡 2회</strong> 반복<br>
-📏 압박 깊이: <strong>약 5cm</strong> (강하게!)<br>
-⏱️ 압박 속도: <strong>100~120회/분</strong> (빠르게!)<br>
-🔋 <strong>AED 도착 즉시 사용</strong> – 제세동이 생존율 결정<br><br>
-<strong>생존 사슬 5단계:</strong><br>
-① 심정지 조기 인식 및 신고 → ② 빠른 심폐소생술 → ③ 빠른 제세동 → ④ 효과적 전문소생술 → ⑤ 심정지 후 치료`,
-    wrongFeedback: `❌ 틀렸습니다.<br><br>
-<strong>힌트:</strong> 심폐소생술의 핵심 비율은 <strong>30:2</strong>입니다!<br>
-• 가슴 압박 <strong>30회</strong> (깊이 5cm, 100~120회/분)<br>
-• 인공호흡 <strong>2회</strong><br>
-• AED 도착하면 즉시 사용!<br>
-기다리지 말고 CPR과 AED를 함께 사용해야 합니다.`,
-    escapeEmoji: '💗',
-    escapeTitle: '선생님을 구했습니다!',
-    escapeDesc: 'CPR과 AED로 선생님의 심장이 다시 뛰기 시작했습니다! 119 구급대가 도착했습니다.',
-    fullHint: `심폐소생술(CPR):\n\n• 가슴 압박 30회 : 인공호흡 2회\n• 압박 깊이: 약 5cm\n• 압박 속도: 100~120회/분\n• AED 도착 즉시 사용\n\n생존 사슬: 심정지 인식→CPR→제세동→전문소생술→사후치료`,
-  },
+    correct:'정답! 등 두드리기 5회를 먼저 시도합니다!',
+    wrong:'힌트: 의식 있는 기도 폐쇄는 먼저 <strong>등 두드리기 5회</strong>를 시행합니다.',
+    hint:'교과서: 등 두드리기는 어깨뼈 사이를 손바닥 뒤꿈치로 강하게 5회 두드립니다.',
+   },
+   {
+    type:'mc',
+    scene:'등 두드리기 5회를 했지만 이물질이 나오지 않았어! 다음은 하임리히법을 써야 해. 어떻게 해야 할까?',
+    question:'하임리히법(복부 밀쳐올리기)의 올바른 방법은?',
+    choices:[
+     {t:'배꼽 아래 주먹을 대고 아래쪽으로 밀어 내린다.', c:false},
+     {t:'명치 아래 주먹을 대고 위쪽 안쪽으로 강하게 밀쳐올린다 (5회).', c:true},
+     {t:'가슴 한가운데를 강하게 누른다.', c:false},
+     {t:'등을 평평하게 눕히고 입으로 공기를 불어넣는다.', c:false},
+    ],
+    correct:'완벽해! 명치 아래 → 위쪽으로 강하게! 이물질 나올 때까지 등 두드리기와 반복해요.',
+    wrong:'힌트: 하임리히법은 <strong>명치 아래</strong>에 주먹을 대고 <strong>위쪽 안쪽으로</strong> 밀쳐올립니다.',
+    hint:'교과서: 하임리히법은 명치(배꼽과 가슴뼈 사이)에 주먹을 대고 위쪽 안쪽으로 강하게 밀쳐올립니다.',
+   },
+  ],
+  fullHint:'기도 폐쇄 처치 (의식 있는 경우):\n\n① 등 두드리기 5회 (어깨뼈 사이)\n② 하임리히법 5회 (명치 아래→위쪽으로)\n③ 이물질 나올 때까지 반복\n\n금지: 물 마시게 하기, 손가락으로 꺼내기',
+  escEmoji:'😮‍💨', escTitle:'유진이를 구했습니다!',
+  escDesc:'하임리히법으로 떡이 튀어나왔습니다! 유진이가 크게 숨을 들이쉬었습니다.',
+ },
+ {
+  id:5, icon:'❤️', bodyClass:'room-5',
+  title:'방 5 · 심폐소생술 + AED (운동장)',
+  lockColor:'#e63946',
+  miyaEnter:'심정지 환자야!! 골든타임 4분! 지금 당장 행동해야 해! 생존 사슬을 이어줘!',
+  steps:[
+   {
+    type:'mc',
+    scene:'교장 선생님이 강당에서 갑자기 쓰러지셨다! 의식도 없고 정상적인 호흡도 없다.\n누군가 이미 119에 신고했고 AED가 근처 벽에 있다.',
+    question:'심폐소생술 가슴 압박의 올바른 방법은?',
+    choices:[
+     {t:'깊이 3cm, 분당 60회 속도', c:false},
+     {t:'깊이 5cm, 분당 100~120회 속도', c:true},
+     {t:'깊이 7cm, 분당 150회 속도', c:false},
+     {t:'깊이 5cm, 분당 60회 속도', c:false},
+    ],
+    correct:'정답! 5cm 깊이로 100~120회/분! 강하고 빠르게!',
+    wrong:'힌트: 가슴 압박은 <strong>약 5cm 깊이</strong>로 <strong>100~120회/분</strong> 속도로 시행합니다.',
+    hint:'교과서: 가슴 압박은 약 5cm 깊이로 분당 100~120회 속도로 시행합니다.',
+   },
+   {
+    type:'drag',
+    scene:'가슴 압박을 시작했어! 이제 CPR의 올바른 순환을 배열해봐!',
+    question:'심폐소생술 생존 사슬 순서를 배열하세요.',
+    items:['③ 빠른 제세동 (AED)','① 심정지 조기 인식 및 119 신고','④ 전문소생술','② 빠른 심폐소생술 (CPR)','⑤ 심정지 후 통합치료'],
+    correctOrder:[1,3,0,2,4],
+    correct:'완벽해! 생존 사슬 5단계를 모두 알고 있어!',
+    wrong:'생존 사슬: 신고→CPR→제세동→전문소생술→사후치료',
+    hint:'교과서: 생존 사슬은 심정지 인식·신고 → CPR → 제세동 → 전문소생술 → 사후치료 순입니다.',
+   },
+   {
+    type:'mc',
+    scene:'CPR을 계속하다가 AED가 도착했어! AED를 어떻게 사용해야 할까?',
+    question:'AED 사용 시 올바른 방법은?',
+    choices:[
+     {t:'CPR을 멈추지 말고 계속하면서 AED를 사용한다.', c:false},
+     {t:'AED 음성 안내를 따르고, 분석·제세동 시에만 CPR을 잠시 멈춘다.', c:true},
+     {t:'AED가 도착했으니 CPR은 그만하고 AED만 사용한다.', c:false},
+     {t:'맥박이 돌아올 때까지 AED를 반복 사용한다.', c:false},
+    ],
+    correct:'정답! AED 음성 안내를 따르고, 분석·충전·제세동 시에만 잠시 멈춰요. 나머지는 CPR 계속!',
+    wrong:'힌트: AED는 <strong>음성 안내를 따르고</strong>, 분석과 제세동 시에만 CPR을 멈춥니다.',
+    hint:'교과서: AED 작동 중 분석·제세동 시에는 환자 접촉을 멈추고, 나머지 시간에는 CPR을 계속합니다.',
+   },
+  ],
+  fullHint:'심폐소생술(CPR):\n• 30회 압박 : 2회 인공호흡\n• 깊이 약 5cm\n• 속도 100~120회/분\n• AED 도착 즉시 사용\n\n생존 사슬: 신고→CPR→제세동→전문소생술→사후치료',
+  escEmoji:'💗', escTitle:'선생님을 구했습니다!',
+  escDesc:'CPR과 AED로 선생님의 심장이 다시 뛰기 시작했습니다! 119 구급대가 도착했습니다.',
+ },
 ];
 
-// ──────────────────────────────────────────────
-//  게임 상태
-// ──────────────────────────────────────────────
-let state = {
-  roomIdx: 0,
-  tries: 3,
-  timer: 60,
-  timerInterval: null,
-  answered: false,
+// ══════════════════════════════════════════════
+//  상태
+// ══════════════════════════════════════════════
+let G = {
+  roomIdx:0, stepIdx:0,
+  tries:3, score:0,
+  combo:0, hintUsed:false,
+  timerVal:60, timerID:null,
+  answered:false,
+  scoreLog:[],
+  dragOrder:[],
 };
 
-function getRoom() { return ROOMS[state.roomIdx]; }
+function room(){ return ROOMS[G.roomIdx]; }
+function step(){ return room().steps[G.stepIdx]; }
 
-// ──────────────────────────────────────────────
+// ══════════════════════════════════════════════
 //  화면 전환
-// ──────────────────────────────────────────────
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+// ══════════════════════════════════════════════
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-// ──────────────────────────────────────────────
-//  게임 시작
-// ──────────────────────────────────────────────
-function startGame() {
-  state.roomIdx = 0;
+// ══════════════════════════════════════════════
+//  시작
+// ══════════════════════════════════════════════
+function startGame(){
+  G={roomIdx:0,stepIdx:0,tries:3,score:0,combo:0,hintUsed:false,timerVal:60,timerID:null,answered:false,scoreLog:[],dragOrder:[]};
   loadRoom();
-  showScreen('game-screen');
+  show('game-screen');
 }
-
-function restartGame() {
-  document.getElementById('escape-overlay').classList.remove('show');
+function restartGame(){
+  document.getElementById('esc-overlay').classList.remove('show');
+  document.body.className='';
   startGame();
 }
-
-function retryRoom() {
-  state.tries = 3;
-  loadRoom();
-  showScreen('game-screen');
+function retryRoom(){
+  G.stepIdx=0; G.tries=3; G.combo=0; G.hintUsed=false;
+  loadRoom(); show('game-screen');
 }
 
-// ──────────────────────────────────────────────
+// ══════════════════════════════════════════════
 //  방 로드
-// ──────────────────────────────────────────────
-function loadRoom() {
-  const room = getRoom();
-  state.tries = 3;
-  state.answered = false;
+// ══════════════════════════════════════════════
+function loadRoom(){
+  const r=room();
+  document.body.className=r.bodyClass;
+  G.answered=false; G.hintUsed=false;
 
-  // 진행 도트
   renderDots();
-
-  // 방 정보
-  document.getElementById('room-label').textContent = `방 ${state.roomIdx + 1}/5`;
-  document.getElementById('room-title').innerHTML = `${room.icon} ${room.title}`;
-  document.getElementById('scene-text').innerHTML = room.scene;
-
-  // 하트
-  renderHearts();
-
-  // 선택지
-  renderChoices();
-
-  // 피드백 초기화
-  const fb = document.getElementById('feedback');
-  fb.className = 'feedback';
-  fb.innerHTML = '';
-
-  // 타이머
+  document.getElementById('room-title-text').textContent=r.title;
+  document.getElementById('lock-icon').textContent='🔒';
+  document.getElementById('lock-icon').classList.remove('unlocked');
+  typeText('miya-text', r.miyaEnter);
+  renderStatus();
+  updateScoreUI();
+  renderStep();
+  document.getElementById('hint-box').className='hint-box';
+  document.getElementById('feedback').className='feedback';
   resetTimer();
 }
 
-function renderDots() {
-  const wrap = document.getElementById('progress-dots');
-  wrap.innerHTML = '';
-  ROOMS.forEach((r, i) => {
-    const d = document.createElement('div');
-    d.className = 'dot ' + (i < state.roomIdx ? 'done' : i === state.roomIdx ? 'current' : 'pending');
-    d.textContent = i < state.roomIdx ? '✓' : (i + 1);
-    wrap.appendChild(d);
-  });
+// ══════════════════════════════════════════════
+//  스텝 렌더
+// ══════════════════════════════════════════════
+function renderStep(){
+  const s=step(), r=room();
+  document.getElementById('step-label').textContent=
+    `스텝 ${G.stepIdx+1}/${r.steps.length}`;
+  G.answered=false;
+  document.getElementById('hint-box').className='hint-box';
+  document.getElementById('hint-box').textContent='';
+  document.getElementById('feedback').className='feedback';
+  document.getElementById('hint-box').innerHTML='';
+
+  typeText('scene-text', s.scene, true);
+
+  const area=document.getElementById('quiz-area');
+  area.innerHTML='';
+
+  if(s.type==='mc') renderMC(area,s);
+  else renderDrag(area,s);
+
+  renderStatus();
+  resetTimer();
 }
 
-function renderHearts() {
-  const bar = document.getElementById('tries-bar');
-  let html = '<span>남은 기회:</span>';
-  for (let i = 0; i < 3; i++) {
-    html += `<span class="heart ${i < state.tries ? '' : 'lost'}">❤️</span>`;
-  }
-  bar.innerHTML = html;
-}
-
-function renderChoices(disabledIdx = null, correctIdx = null) {
-  const room = getRoom();
-  const wrap = document.getElementById('choices-wrap');
-  wrap.innerHTML = '';
-  room.choices.forEach((c, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'choice-btn';
-    if (disabledIdx !== null) {
-      btn.disabled = true;
-      if (i === correctIdx) btn.classList.add('correct');
-      else if (i === disabledIdx && !c.correct) btn.classList.add('wrong');
-    }
-    btn.innerHTML = `<span class="choice-num">${i + 1}</span><span>${c.text}</span>`;
-    btn.onclick = () => handleChoice(i);
+function renderMC(area, s){
+  const wrap=document.createElement('div');
+  wrap.className='choices';
+  s.choices.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.innerHTML=`<span class="cnum">${i+1}</span><span>${c.t}</span>`;
+    btn.onclick=()=>handleMC(i,c.correct||c.c,btn,s);
     wrap.appendChild(btn);
   });
+  area.appendChild(wrap);
 }
 
-// ──────────────────────────────────────────────
-//  선택 처리
-// ──────────────────────────────────────────────
-function handleChoice(idx) {
-  if (state.answered) return;
-  const room = getRoom();
-  const chosen = room.choices[idx];
-  const correctIdx = room.choices.findIndex(c => c.correct);
+// ── 드래그앤드롭 ──
+let dragSrc=null;
+function renderDrag(area, s){
+  G.dragOrder=[...s.items.keys()]; // 0,1,2,...
+  shuffleArr(G.dragOrder);
 
-  const fb = document.getElementById('feedback');
+  const title=document.createElement('p');
+  title.style.cssText='font-size:.85rem;color:var(--dim);margin-bottom:.5rem;';
+  title.textContent='↕ 드래그하여 올바른 순서로 배열하세요';
+  area.appendChild(title);
 
-  if (chosen.correct) {
-    state.answered = true;
-    clearInterval(state.timerInterval);
-    renderChoices(idx, correctIdx);
-    fb.className = 'feedback ok show';
-    fb.innerHTML = `<div class="hint-title">✅ 정답!</div>${room.correctFeedback}`;
-    spawnParticles(['🎉', '✨', '💚', '🌟']);
-    setTimeout(() => showEscape(), 2200);
-  } else {
-    state.tries--;
-    renderHearts();
-    renderChoices(idx, correctIdx);
-    setTimeout(() => renderChoices(), 900);
+  const da=document.createElement('div');
+  da.className='drag-area'; da.id='drag-area';
+  area.appendChild(da);
 
-    if (state.tries <= 0) {
-      state.answered = true;
-      clearInterval(state.timerInterval);
-      fb.className = 'feedback bad show';
-      fb.innerHTML = `<div class="hint-title">❌ 기회를 모두 사용했습니다!</div>${room.wrongFeedback}`;
-      setTimeout(() => showRetry(), 2500);
-    } else {
-      fb.className = 'feedback bad show';
-      fb.innerHTML = `<div class="hint-title">❌ 오답 (남은 기회: ${state.tries})</div>${room.wrongFeedback}`;
-    }
+  rebuildDragItems(da, s);
+
+  const btn=document.createElement('button');
+  btn.className='btn btn-red drag-submit';
+  btn.textContent='✅ 순서 확인';
+  btn.onclick=()=>handleDrag(s);
+  area.appendChild(btn);
+}
+
+function rebuildDragItems(da, s){
+  da.innerHTML='';
+  G.dragOrder.forEach((origIdx,pos)=>{
+    const item=document.createElement('div');
+    item.className='drag-item';
+    item.draggable=true;
+    item.dataset.pos=pos;
+    item.innerHTML=`<span class="drag-handle">⠿</span><span>${s.items[origIdx]}</span>`;
+    item.addEventListener('dragstart', e=>{
+      dragSrc=pos;
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', ()=> item.classList.remove('dragging'));
+    item.addEventListener('dragover', e=>{ e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', ()=> item.classList.remove('drag-over'));
+    item.addEventListener('drop', e=>{
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      if(dragSrc===null||dragSrc===pos) return;
+      const tmp=G.dragOrder[dragSrc];
+      G.dragOrder[dragSrc]=G.dragOrder[pos];
+      G.dragOrder[pos]=tmp;
+      rebuildDragItems(da, s);
+    });
+    // 모바일 터치
+    let touchY=0;
+    item.addEventListener('touchstart', e=>{ dragSrc=pos; touchY=e.touches[0].clientY; });
+    item.addEventListener('touchmove', e=>{
+      e.preventDefault();
+      const t=e.touches[0];
+      const el=document.elementFromPoint(t.clientX, t.clientY);
+      if(el&&el.closest('.drag-item')){
+        document.querySelectorAll('.drag-item').forEach(d=>d.classList.remove('drag-over'));
+        el.closest('.drag-item').classList.add('drag-over');
+      }
+    },{passive:false});
+    item.addEventListener('touchend', e=>{
+      const t=e.changedTouches[0];
+      const el=document.elementFromPoint(t.clientX, t.clientY);
+      document.querySelectorAll('.drag-item').forEach(d=>d.classList.remove('drag-over'));
+      if(el){
+        const target=el.closest('.drag-item');
+        if(target&&parseInt(target.dataset.pos)!==dragSrc){
+          const tPos=parseInt(target.dataset.pos);
+          const tmp=G.dragOrder[dragSrc];
+          G.dragOrder[dragSrc]=G.dragOrder[tPos];
+          G.dragOrder[tPos]=tmp;
+          rebuildDragItems(da, s);
+        }
+      }
+      dragSrc=null;
+    });
+    da.appendChild(item);
+  });
+}
+
+function shuffleArr(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
   }
 }
 
-// ──────────────────────────────────────────────
-//  탈출 오버레이
-// ──────────────────────────────────────────────
-function showEscape() {
-  const room = getRoom();
-  const isLast = state.roomIdx === ROOMS.length - 1;
-  document.getElementById('esc-emoji').textContent = room.escapeEmoji;
-  document.getElementById('esc-title').textContent = room.escapeTitle;
-  document.getElementById('esc-desc').textContent = room.escapeDesc;
-  const btn = document.getElementById('esc-btn');
-  btn.textContent = isLast ? '🏆 결과 보기' : '다음 방으로 →';
-  document.getElementById('escape-overlay').classList.add('show');
+// ══════════════════════════════════════════════
+//  정답 처리
+// ══════════════════════════════════════════════
+function handleMC(idx, correct, btn, s){
+  if(G.answered) return;
+  const allBtns=document.querySelectorAll('.choice-btn');
+
+  if(correct){
+    G.answered=true;
+    clearInterval(G.timerID);
+    btn.classList.add('correct');
+    allBtns.forEach(b=>b.disabled=true);
+    onCorrect(s);
+  } else {
+    btn.classList.add('wrong');
+    btn.disabled=true;
+    G.tries--;
+    G.combo=0;
+    renderStatus();
+    showFeedback('bad', `<div class="ftitle">❌ 오답 (남은 기회: ${G.tries})</div>👩‍⚕️ "${s.wrong}"`);
+    if(G.tries<=0){ G.answered=true; clearInterval(G.timerID); setTimeout(()=>onFail(),1800); }
+  }
 }
 
-function nextRoom() {
-  document.getElementById('escape-overlay').classList.remove('show');
-  state.roomIdx++;
-  if (state.roomIdx >= ROOMS.length) {
-    showScreen('ending-screen');
+function handleDrag(s){
+  if(G.answered) return;
+  const isCorrect=G.dragOrder.every((v,i)=>v===s.correctOrder[i]);
+  const items=document.querySelectorAll('.drag-item');
+
+  if(isCorrect){
+    G.answered=true;
+    clearInterval(G.timerID);
+    items.forEach(it=>it.classList.add('drag-result-correct'));
+    onCorrect(s);
   } else {
+    G.tries--; G.combo=0;
+    renderStatus();
+    items.forEach(it=>it.classList.add('drag-result-wrong'));
+    setTimeout(()=>{
+      items.forEach(it=>it.classList.remove('drag-result-wrong'));
+    },700);
+    showFeedback('bad', `<div class="ftitle">❌ 순서가 틀렸습니다 (남은 기회: ${G.tries})</div>👩‍⚕️ "${s.wrong}"`);
+    if(G.tries<=0){ G.answered=true; clearInterval(G.timerID); setTimeout(()=>onFail(),1800); }
+  }
+}
+
+function onCorrect(s){
+  G.combo++;
+  const timeBonus = G.timerVal*2;
+  const comboMult = G.combo>=2 ? 1.5 : 1;
+  const hintPenalty = G.hintUsed ? -20 : 0;
+  const earned = Math.round(100*comboMult) + timeBonus + hintPenalty;
+  G.score = Math.max(0, G.score+earned);
+  G.scoreLog.push({room:room().id, step:G.stepIdx+1, base:100, combo:G.combo>=2?'+콤보':'-', time:timeBonus, hint:hintPenalty, earned});
+
+  updateScoreUI(true);
+  showScorePop(`+${earned}`);
+
+  const comboMsg = G.combo>=2 ? ` 🔥 ${G.combo}연속 콤보!` : '';
+  showFeedback('ok', `<div class="ftitle">✅ 정답!${comboMsg}</div>👩‍⚕️ "완벽해! 골든타임을 지켰어! 🎉"<br><br>${s.correct}<br><br><small>⏱️ 시간 보너스 +${timeBonus}점${hintPenalty<0?' | 💡 힌트 패널티 '+hintPenalty+'점':''}</small>`);
+
+  spawnParticles(['🎉','✨','💚','🌟']);
+  setTimeout(()=>proceedStep(), 2400);
+}
+
+function onFail(){
+  showFeedback('bad',`<div class="ftitle">😰 기회를 모두 사용했습니다!</div>👩‍⚕️ "앗! 그건 위험해! 다시 생각해봐 💦"`);
+  setTimeout(()=>{
+    document.getElementById('retry-msg').textContent=`${room().title} ${G.stepIdx+1}번 스텝에서 실패했습니다. 핵심 내용을 확인하세요!`;
+    document.getElementById('retry-hint').textContent=room().fullHint;
+    show('retry-screen');
+  },2000);
+}
+
+function proceedStep(){
+  const r=room();
+  if(G.stepIdx+1 < r.steps.length){
+    G.stepIdx++;
+    G.tries=3; G.hintUsed=false;
+    renderStep();
+  } else {
+    showEscape();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  탈출 오버레이
+// ══════════════════════════════════════════════
+function showEscape(){
+  const r=room();
+  const isLast=G.roomIdx===ROOMS.length-1;
+  document.getElementById('lock-icon').textContent='🗝️';
+  document.getElementById('lock-icon').classList.add('unlocked');
+
+  document.getElementById('esc-emoji').textContent=r.escEmoji;
+  document.getElementById('esc-title').textContent=r.escTitle;
+  document.getElementById('esc-desc').textContent=r.escDesc;
+  document.getElementById('esc-score-info').textContent=`현재 점수: ${G.score}점`;
+  document.getElementById('esc-btn').textContent= isLast?'🏆 결과 보기':'다음 방으로 →';
+  document.getElementById('esc-overlay').classList.add('show');
+}
+
+function nextStep(){
+  document.getElementById('esc-overlay').classList.remove('show');
+  G.roomIdx++;
+  if(G.roomIdx>=ROOMS.length){
+    showEnding();
+  } else {
+    G.stepIdx=0; G.tries=3; G.combo=0; G.hintUsed=false;
     loadRoom();
   }
 }
 
-// ──────────────────────────────────────────────
-//  재도전 화면
-// ──────────────────────────────────────────────
-function showRetry() {
-  const room = getRoom();
-  document.getElementById('retry-msg').textContent =
-    `${room.title}에서 3번 모두 틀렸습니다. 핵심 내용을 확인하고 다시 도전하세요!`;
-  document.getElementById('retry-hint').textContent = room.fullHint;
-  showScreen('retry-screen');
+// ══════════════════════════════════════════════
+//  엔딩
+// ══════════════════════════════════════════════
+function showEnding(){
+  show('ending-screen');
+  document.body.className='';
+  const s=G.score;
+  let grade,emoji,miyaMsg;
+  if(s>=450){ grade='S급 · 생명의 은인'; emoji='🏆';
+    miyaMsg='"와아! 믿을 수 없어! 완벽한 응급처치였어! 넌 진짜 생명의 은인이야! 앞으로도 이 지식으로 주변 사람들을 도와줘! 고마워! 💖"'; }
+  else if(s>=350){ grade='A급 · 응급처치 마스터'; emoji='🥇';
+    miyaMsg='"정말 잘 했어! 응급처치 마스터 수준이야! 조금만 더 연습하면 완벽해질 거야! 👏"'; }
+  else if(s>=250){ grade='B급 · 응급처치 견습생'; emoji='🥈';
+    miyaMsg='"잘 했어! 기본은 알고 있어. 교과서를 한 번 더 읽으면 훨씬 더 잘 할 수 있을 거야! 📚"'; }
+  else { grade='C급 · 다시 훈련이 필요해'; emoji='🥉';
+    miyaMsg='"괜찮아! 처음이라 어려울 수 있어. 교과서를 꼼꼼히 읽고 다시 도전해봐! 포기하지 마! 💪"'; }
+
+  document.getElementById('ending-grade').textContent=emoji;
+  document.getElementById('ending-title').textContent=grade.split('·')[1].trim();
+  document.getElementById('final-score').textContent=s+'점';
+  document.getElementById('grade-label').textContent=grade;
+  document.getElementById('miya-ending-text').textContent=miyaMsg;
+
+  let breakdown='<strong>점수 내역:</strong><br>';
+  G.scoreLog.forEach(l=>{
+    breakdown+=`방${l.room} 스텝${l.step}: 기본 100${l.combo!=='-'?' + 콤보 보너스':''} + 시간 +${l.time}${l.hint<0?' + 힌트 '+l.hint:''} = <strong>${l.earned}점</strong><br>`;
+  });
+  document.getElementById('score-breakdown').innerHTML=breakdown;
+  spawnParticles(['🏆','🎊','✨','🌟','💖','🎉'],20);
 }
 
-// ──────────────────────────────────────────────
-//  타이머
-// ──────────────────────────────────────────────
-function resetTimer() {
-  clearInterval(state.timerInterval);
-  state.timer = 60;
-  updateTimerUI();
-  state.timerInterval = setInterval(() => {
-    if (state.answered) return;
-    state.timer--;
-    updateTimerUI();
-    if (state.timer <= 0) {
-      clearInterval(state.timerInterval);
-      if (!state.answered) {
-        state.answered = true;
-        state.tries = 0;
-        renderHearts();
-        const room = getRoom();
-        const fb = document.getElementById('feedback');
-        fb.className = 'feedback bad show';
-        fb.innerHTML = `<div class="hint-title">⏰ 시간 초과!</div>${room.wrongFeedback}`;
-        setTimeout(() => showRetry(), 2500);
-      }
+// ══════════════════════════════════════════════
+//  힌트
+// ══════════════════════════════════════════════
+function showHint(){
+  if(G.hintUsed) return;
+  G.hintUsed=true;
+  const hb=document.getElementById('hint-box');
+  hb.innerHTML=`💡 <strong>힌트 (-20점 패널티)</strong><br>${step().hint}`;
+  hb.classList.add('show');
+}
+
+// ══════════════════════════════════════════════
+//  UI 헬퍼
+// ══════════════════════════════════════════════
+function renderDots(){
+  const wrap=document.getElementById('progress-dots');
+  wrap.innerHTML='';
+  ROOMS.forEach((r,i)=>{
+    const d=document.createElement('div');
+    d.className='dot '+(i<G.roomIdx?'done':i===G.roomIdx?'current':'pending');
+    d.textContent=i<G.roomIdx?'✓':(i+1);
+    wrap.appendChild(d);
+  });
+}
+
+function renderStatus(){
+  const bar=document.getElementById('hearts');
+  bar.innerHTML='';
+  for(let i=0;i<3;i++){
+    const h=document.createElement('span');
+    h.className='heart'+(i<G.tries?'':' lost');
+    h.textContent='❤️';
+    bar.appendChild(h);
+  }
+}
+
+function updateScoreUI(bump=false){
+  const el=document.getElementById('score-display');
+  el.textContent=G.score;
+  if(bump){
+    el.classList.add('bump');
+    setTimeout(()=>el.classList.remove('bump'),300);
+  }
+}
+
+function showFeedback(type, html){
+  const fb=document.getElementById('feedback');
+  fb.className=`feedback ${type} show`;
+  fb.innerHTML=html;
+}
+
+function showScorePop(text){
+  const el=document.createElement('div');
+  el.className='score-pop';
+  el.textContent=text;
+  el.style.left=(30+Math.random()*40)+'vw';
+  el.style.top='50vh';
+  el.style.color=text.startsWith('-')?'#e63946':'#2d9c5a';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1300);
+}
+
+// ── 타이핑 효과 ──
+let typingID=null;
+function typeText(elId, html, isHTML=false){
+  const el=document.getElementById(elId);
+  if(typingID){ clearInterval(typingID); }
+  if(isHTML){
+    // HTML은 즉시 표시 (태그 포함 타이핑은 복잡)
+    el.innerHTML=html;
+    return;
+  }
+  el.textContent='';
+  el.classList.add('typing');
+  let i=0;
+  typingID=setInterval(()=>{
+    if(i<html.length){
+      el.textContent+=html[i++];
+    } else {
+      clearInterval(typingID);
+      el.classList.remove('typing');
     }
-  }, 1000);
+  },18);
 }
 
-function updateTimerUI() {
-  const el = document.getElementById('timer-display');
-  el.textContent = state.timer;
-  if (state.timer > 30) el.style.color = 'var(--timer-ok)';
-  else if (state.timer > 15) el.style.color = 'var(--timer-warn)';
-  else el.style.color = 'var(--timer-danger)';
+// ── 타이머 ──
+function resetTimer(){
+  clearInterval(G.timerID);
+  G.timerVal=60;
+  updateTimerUI();
+  G.timerID=setInterval(()=>{
+    if(G.answered) return;
+    G.timerVal--;
+    updateTimerUI();
+    if(G.timerVal<=0){
+      clearInterval(G.timerID);
+      if(!G.answered){ G.answered=true; G.tries=0; renderStatus(); onFail(); }
+    }
+  },1000);
 }
 
-// ──────────────────────────────────────────────
-//  파티클
-// ──────────────────────────────────────────────
-function spawnParticles(emojis) {
-  for (let i = 0; i < 12; i++) {
-    setTimeout(() => {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      p.style.left = (20 + Math.random() * 60) + 'vw';
-      p.style.top = (40 + Math.random() * 30) + 'vh';
+function updateTimerUI(){
+  const el=document.getElementById('timer-display');
+  el.textContent=G.timerVal;
+  el.style.color=G.timerVal>30?'var(--success)':G.timerVal>15?'var(--warning)':'var(--accent)';
+}
+
+// ── 파티클 ──
+function spawnParticles(emojis, count=12){
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.className='particle';
+      p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+      p.style.left=(15+Math.random()*70)+'vw';
+      p.style.top=(35+Math.random()*35)+'vh';
       document.body.appendChild(p);
-      setTimeout(() => p.remove(), 1300);
-    }, i * 80);
+      setTimeout(()=>p.remove(),1400);
+    },i*70);
   }
 }
 </script>
